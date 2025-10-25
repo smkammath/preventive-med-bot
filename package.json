@@ -1,7 +1,7 @@
 {
   "name": "preventive-med-bot",
   "version": "1.0.0",
-  "description": "AI-powered preventive health chatbot using OpenAI GPT models",
+  "description": "Preventive medicine chatbot (OpenAI) - production-ready",
   "main": "server.js",
   "type": "module",
   "scripts": {
