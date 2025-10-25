@@ -1,129 +1,67 @@
-// server.js — Preventive-Med-Bot (Final version)
-// ✅ Fixed: Root route now correctly serves index.html on Render
-// ✅ Works with static files and OpenAI API
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
-require('dotenv').config();
-const express = require('express');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
+dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 10000;
 
-// ✅ Serve the static frontend files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ Serve index.html for the root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// --- Environment Variables ---
-const OPENAI_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.MODEL || 'gpt-4o-mini';
-const IMAGE_MODEL = process.env.IMAGE_MODEL || 'dalle-3';
-
-if (!OPENAI_KEY) {
-  console.error('❌ Missing OPENAI_API_KEY in environment');
+// ✅ Ensure OpenAI key exists
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ ERROR: Missing OPENAI_API_KEY in environment variables.");
   process.exit(1);
 }
 
-// --- Load system prompt ---
-const systemPrompt = fs.readFileSync(path.join(__dirname, 'openai-system-prompt.txt'), 'utf8');
+app.use(express.json());
+app.use(express.static("public"));
 
-// --- In-memory session store (no DB needed) ---
-const sessions = {};
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-function getSessionMessages(sessionId) {
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = [{ role: 'system', content: systemPrompt }];
-  }
-  return sessions[sessionId];
-}
-
-// --- Helper to call OpenAI Chat API ---
-async function callOpenAI(messages) {
-  const url = 'https://api.openai.com/v1/chat/completions';
-  const body = {
-    model: MODEL,
-    messages,
-    temperature: 0.0,
-    max_tokens: 800
-  };
-  const resp = await axios.post(url, body, {
-    headers: { Authorization: `Bearer ${OPENAI_KEY}` }
-  });
-  return resp.data;
-}
-
-// --- Chat Endpoint ---
-app.post('/api/chat', async (req, res) => {
-  const { sessionId = 'default', userMessage } = req.body;
-  if (!userMessage) return res.status(400).json({ error: 'Missing userMessage' });
-
-  const messages = getSessionMessages(sessionId);
-  messages.push({ role: 'user', content: userMessage });
-
-  // ✅ Red-flag emergency keyword detection
-  const lower = userMessage.toLowerCase();
-  const redFlags = [
-    'chest pain',
-    'shortness of breath',
-    'severe bleeding',
-    'loss of consciousness',
-    'suicidal'
-  ];
-  if (redFlags.some(flag => lower.includes(flag))) {
-    const emergency = {
-      summary: '🚨 Possible medical emergency detected.',
-      action: 'Please seek immediate emergency medical care (call your local emergency number).',
-      sources: ['WHO emergency triage guidelines'],
-      confidence: 'High',
-      follow_up: []
-    };
-    messages.push({ role: 'assistant', content: JSON.stringify(emergency) });
-    return res.json({ ok: true, emergency: true, message: emergency });
-  }
-
+// 💬 Chat Endpoint
+app.post("/chat", async (req, res) => {
   try {
-    const aiResponse = await callOpenAI(messages);
-    const assistantText = aiResponse.choices[0].message.content;
-    messages.push({ role: 'assistant', content: assistantText });
-    res.json({ ok: true, model: MODEL, assistantText });
-  } catch (err) {
-    console.error('❌ OpenAI API Error:', err?.response?.data || err.message);
-    res.status(500).json({ error: 'OpenAI request failed', details: err.message });
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required." });
+    }
+
+    const response = await fetch(OPENAI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: process.env.MODEL || "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are PreventiveMedBot — a preventive health assistant. You give safe, evidence-based advice focused on prevention, wellness, and lifestyle improvement. Avoid diagnosis and always suggest consulting a doctor when needed.",
+          },
+          { role: "user", content: message },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ OpenAI API Error:", errorText);
+      return res.status(500).json({ error: "OpenAI API call failed." });
+    }
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || "⚠️ No response generated.";
+    res.json({ reply });
+  } catch (error) {
+    console.error("❌ Server Error:", error);
+    res.status(500).json({ error: "Internal Server Error." });
   }
 });
 
-// --- Image Generation Endpoint ---
-app.post('/api/image', async (req, res) => {
-  try {
-    const { prompt, n = 1, size = '1024x1024' } = req.body;
-    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
-
-    const url = 'https://api.openai.com/v1/images/generations';
-    const resp = await axios.post(
-      url,
-      { model: IMAGE_MODEL, prompt, n, size },
-      { headers: { Authorization: `Bearer ${OPENAI_KEY}` } }
-    );
-
-    res.json({ ok: true, images: resp.data.data });
-  } catch (e) {
-    console.error('❌ Image generation failed:', e?.response?.data || e.message);
-    res.status(500).json({ error: 'Image generation failed', details: e.message });
-  }
+// 🚀 Start the Server
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
-
-// ✅ Fallback route — serves index.html for any unknown path
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// --- Start Server ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
