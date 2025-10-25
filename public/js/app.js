@@ -1,28 +1,41 @@
-const form = document.getElementById('chatForm');
-const input = document.getElementById('userInput');
-const messages = document.getElementById('messages');
-const imageBox = document.getElementById('imageBox');
+const chatBox = document.querySelector(".chat");
+const form = document.querySelector("form");
+const input = document.querySelector("input");
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-  addMsg(text, 'user');
-  input.value = '';
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userMessage: text })
-  });
-  const data = await res.json();
-  if (data.message) addMsg(data.message, 'bot');
-  if (data.emergency) addMsg(data.message.action, 'bot');
-});
 
-function addMsg(t, cls) {
-  const div = document.createElement('div');
-  div.className = 'msg ' + cls;
-  div.innerHTML = t.replaceAll('\n', '<br>');
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  // Show user message
+  const userMsg = document.createElement("div");
+  userMsg.className = "user";
+  userMsg.textContent = userText;
+  chatBox.appendChild(userMsg);
+
+  // Show temporary "thinking" message
+  const botMsg = document.createElement("div");
+  botMsg.className = "bot";
+  botMsg.textContent = "Thinking...";
+  chatBox.appendChild(botMsg);
+
+  input.value = "";
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  try {
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userText }),
+    });
+
+    const data = await response.json();
+    botMsg.textContent = data.reply || "⚠️ No response received.";
+  } catch (err) {
+    botMsg.textContent = "❌ Server error. Try again later.";
+    console.error(err);
+  }
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
