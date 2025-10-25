@@ -1,20 +1,47 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PreventiveMedBot</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    :root { --bg: #f4f6ff; --card:#fff; --accent:#2962ff; }
+    body { margin:0; font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,var(--bg),#fff); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px; }
+    .card { width:720px; max-width:95%; background:var(--card); border-radius:12px; box-shadow:0 12px 36px rgba(16,24,40,0.08); overflow:hidden; display:flex; flex-direction:column; }
+    header{ padding:24px; display:flex; gap:12px; align-items:center; border-bottom:1px solid #f0f3ff; }
+    header h1{ margin:0; font-size:24px; color:#0f172a; }
+    .chat{ padding:20px; min-height:360px; max-height:60vh; overflow:auto; display:flex; flex-direction:column; gap:12px; background:linear-gradient(180deg,#fff,#fbfdff); }
+    .msg{ padding:12px 16px; border-radius:12px; max-width:76%; line-height:1.4; }
+    .user{ align-self:flex-end; background:#e6f0ff; color:#0f172a; border-bottom-right-radius:2px; }
+    .bot{ align-self:flex-start; background:#f1f8e9; color:#0f172a; border-bottom-left-radius:2px; }
+    .controls{ display:flex; gap:8px; padding:12px; border-top:1px solid #f0f3ff; }
+    input[type="text"]{ flex:1; padding:10px 12px; border:1px solid #e6eefc; border-radius:8px; outline:none; }
+    button{ background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; }
+    .image-grid{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .image-grid img{ width:180px; max-width:100%; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); }
+    .tag{ font-size:12px; color:#6b7280; }
+  </style>
 </head>
 <body>
-  <div class="app">
-    <h1>🩺 PreventiveMedBot</h1>
-    <div id="messages" class="messages"></div>
-    <form id="chatForm">
-      <input id="userInput" placeholder="Describe your concern..." />
+  <div class="card" role="application" aria-label="PreventiveMedBot">
+    <header>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+        <path d="M12 2v4" stroke="#2962ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 6v2a4 4 0 0 0 8 0V6" stroke="#2962ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="14" r="6" stroke="#8b5cf6" stroke-width="1.6"></circle>
+      </svg>
+      <h1>PreventiveMedBot</h1>
+      <div style="margin-left:auto" class="tag">Preventive medicine assistant</div>
+    </header>
+
+    <div class="chat" id="messages" role="log" aria-live="polite"></div>
+
+    <form id="chatForm" class="controls" autocomplete="off">
+      <input id="userInput" type="text" placeholder="Describe your concern (e.g., 'I have a headache')..." />
       <button type="submit">Send</button>
     </form>
-    <div id="imageBox"></div>
   </div>
+
   <script src="/js/app.js"></script>
 </body>
 </html>
