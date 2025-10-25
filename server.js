@@ -1,7 +1,7 @@
-// server.js — PreventiveMedBot (robust production-ready version)
+// server.js
 import express from "express";
+import fetch from "node-fetch";
 import dotenv from "dotenv";
-import path from "path";
 import cors from "cors";
 
 dotenv.config();
@@ -9,169 +9,81 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Use built-in fetch (Node 18+)
-const fetchFn = global.fetch;
-
-// Middlewares
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(process.cwd(), "public")));
+app.use(cors());
+app.use(express.static("public"));
 
-// Load system prompt if present
-import { readFileSync, existsSync } from "fs";
-let systemPrompt = "You are PreventiveMedBot — a preventive medicine assistant that provides safe, evidence-based lifestyle and wellness advice. Avoid diagnosis; encourage professional care when needed.";
-const promptFile = path.join(process.cwd(), "openai-system-prompt.txt");
-if (existsSync(promptFile)) {
-  try {
-    systemPrompt = readFileSync(promptFile, "utf8");
-  } catch (e) {
-    console.warn("Warning: could not read openai-system-prompt.txt; using default prompt.");
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const MODEL = process.env.MODEL || "gpt-4o-mini";
+
+// 🧠 Helper: Format raw text cleanly
+function cleanAIResponse(text) {
+  if (!text) return "I'm sorry, I couldn't generate a response right now.";
+  // Remove JSON code block syntax if present
+  return text
+    .replace(/```json|```/g, "")
+    .replace(/["{}]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// 🩺 POST route to handle chat requests
+app.post("/chat", async (req, res) => {
+  const userMessage = req.body.message;
+
+  if (!userMessage) {
+    return res.status(400).json({ error: "No message provided." });
   }
-}
 
-// Helper: check API key on demand (so server doesn't crash if missing)
-function getApiKey() {
-  return process.env.OPENAI_API_KEY || null;
-}
-
-// Emergency/simple red-flag detection (quick check before calling API)
-function detectEmergency(userText) {
-  if (!userText) return false;
-  const lowered = userText.toLowerCase();
-  const flags = [
-    "chest pain",
-    "shortness of breath",
-    "severe bleeding",
-    "loss of consciousness",
-    "suicidal",
-    "suicide",
-    "stroke",
-    "unable to breathe",
-    "difficulty breathing"
-  ];
-  return flags.some((f) => lowered.includes(f));
-}
-
-// --- Chat endpoint ---
-app.post("/api/chat", async (req, res) => {
   try {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      return res.status(503).json({
-        error: "Service temporarily unavailable: missing API key (admin)."
-      });
-    }
-
-    const userMessage = req.body?.userMessage || req.body?.message || "";
-    if (!userMessage) {
-      return res.status(400).json({ error: "Missing userMessage in request body." });
-    }
-
-    // Quick emergency detection
-    if (detectEmergency(userMessage)) {
-      const emergency = {
-        summary: "🚨 Possible medical emergency detected.",
-        action: "If you or someone is experiencing this now, please call emergency services immediately.",
-        follow_up: "If stable, describe symptoms, duration, and severity for triage guidance."
-      };
-      return res.json({ ok: true, emergency: true, message: emergency });
-    }
-
-    // Build messages array (system + user)
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userMessage }
-    ];
-
-    // Call OpenAI Chat Completions
-    const model = process.env.MODEL || "gpt-4o-mini"; // default
-    const openaiUrl = "https://api.openai.com/v1/chat/completions";
-
-    const resp = await fetchFn(openaiUrl, {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.0,
-        max_tokens: 800
-      })
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are PreventiveMedBot, an AI specializing in preventive healthcare. " +
+              "Provide concise, empathetic, and helpful advice about health habits, lifestyle improvements, and symptom awareness. " +
+              "Never diagnose — always emphasize consulting healthcare professionals if symptoms persist.",
+          },
+          {
+            role: "user",
+            content: userMessage,
+          },
+        ],
+      }),
     });
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error("OpenAI API error:", resp.status, errText);
-      return res.status(502).json({ error: "OpenAI API call failed", details: errText });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Failed to fetch from OpenAI API");
     }
 
-    const json = await resp.json();
-    const assistantText = json.choices?.[0]?.message?.content ?? null;
-    if (!assistantText) {
-      return res.status(500).json({ error: "No assistant response returned from OpenAI." });
-    }
+    const aiMessage = data.choices?.[0]?.message?.content || "";
+    const cleanedResponse = cleanAIResponse(aiMessage);
 
-    return res.json({ ok: true, assistantText });
-  } catch (err) {
-    console.error("Server error in /api/chat:", err);
-    return res.status(500).json({ error: "Internal server error." });
+    res.json({ reply: cleanedResponse });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({
+      error: "Error generating response from OpenAI",
+      details: error.message,
+    });
   }
 });
 
-// --- Image generation endpoint ---
-app.post("/api/image", async (req, res) => {
-  try {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      return res.status(503).json({ error: "Service temporarily unavailable: missing API key (admin)." });
-    }
-
-    const prompt = req.body?.prompt;
-    if (!prompt) return res.status(400).json({ error: "Missing prompt in request body." });
-
-    const model = process.env.IMAGE_MODEL || "gpt-image-1";
-    const url = "https://api.openai.com/v1/images/generations";
-
-    const resp = await fetchFn(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        n: req.body.n || 1,
-        size: req.body.size || "1024x1024"
-      })
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error("OpenAI image API error:", resp.status, errText);
-      return res.status(502).json({ error: "OpenAI image API call failed", details: errText });
-    }
-
-    const json = await resp.json();
-    // OpenAI images endpoint can return data[].url or data[].b64_json depending on response — send raw to client
-    return res.json({ ok: true, images: json.data });
-  } catch (err) {
-    console.error("Server error in /api/image:", err);
-    return res.status(500).json({ error: "Internal server error (image)." });
-  }
-});
-
-// Serve index.html for root and fallback (SPA friendly)
+// 🩵 Default route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "index.html"));
-});
-app.get("*", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "index.html"));
+  res.sendFile("index.html", { root: "public" });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
