@@ -1,3 +1,7 @@
+# =======================================
+# Preventive-Med-Bot Project .gitignore
+# =======================================
+
 # Logs
 logs
 *.log
@@ -25,23 +29,23 @@ coverage
 # nyc test coverage
 .nyc_output
 
-# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+# Grunt intermediate storage
 .grunt
 
-# Bower dependency directory (https://bower.io/)
+# Bower dependency directory
 bower_components
 
 # node-waf configuration
 .lock-wscript
 
-# Compiled binary addons (https://nodejs.org/api/addons.html)
+# Compiled binary addons
 build/Release
 
 # Dependency directories
 node_modules/
 jspm_packages/
 
-# Snowpack dependency directory (https://snowpack.dev/)
+# Snowpack dependency directory
 web_modules/
 
 # TypeScript cache
@@ -68,25 +72,22 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.*
-!.env.example
+!.env.example   # Keep example file for reference
 
-# parcel-bundler cache (https://parceljs.org/)
+# parcel-bundler cache
 .cache
 .parcel-cache
 
-# Next.js build output
+# Framework build outputs
 .next
 out
-
-# Nuxt.js build / generate output
 .nuxt
 dist
 
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
+# public    KEEP THIS COMMENTED OUT (important!)
 
 # vuepress build output
 .vuepress/dist
@@ -122,7 +123,7 @@ dist
 # TernJS port file
 .tern-port
 
-# Stores VSCode versions used for testing VSCode extensions
+# VSCode test folders
 .vscode-test
 
 # yarn v3
@@ -137,3 +138,15 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# =======================================
+# CUSTOM PROJECT RULES
+# =======================================
+
+# Don’t upload local environment or dependencies
+node_modules/
+.env
+
+# DO NOT ignore the public folder
+# (This ensures index.html, styles.css, and js/app.js get deployed)
+# public
