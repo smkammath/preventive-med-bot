@@ -10,6 +10,7 @@
       --card: rgba(255, 255, 255, 0.9);
       --accent: #2962ff;
       --text: #0f172a;
+      --neon: #00e5ff;
     }
 
     body {
@@ -18,11 +19,10 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 32px;
-
-      /* 🔥 Background image setup */
       background: url("/images/medbot6.jpg") no-repeat center center fixed;
       background-size: cover;
       backdrop-filter: blur(4px);
@@ -31,31 +31,31 @@
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(6px);
       z-index: 0;
     }
 
     .card {
       position: relative;
-      width: 720px;
-      max-width: 95%;
+      width: 80%;
+      max-width: 900px;
+      min-height: 500px;
       background: var(--card);
-      border-radius: 16px;
+      border-radius: 18px;
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
       z-index: 1;
       animation: pulseGlow 6s ease-in-out infinite;
     }
 
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 12px 36px rgba(41, 98, 255, 0.4); }
-      50% { box-shadow: 0 20px 60px rgba(41, 98, 255, 0.7); }
+      50% { box-shadow: 0 20px 60px rgba(0, 229, 255, 0.7); }
     }
 
     header {
@@ -64,70 +64,79 @@
       gap: 12px;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
     }
 
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 26px;
       color: #0f172a;
+      text-shadow: 0 0 10px rgba(41, 98, 255, 0.4);
     }
 
     .chat {
+      flex: 1;
       padding: 20px;
-      min-height: 360px;
-      max-height: 60vh;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .msg {
-      padding: 12px 16px;
-      border-radius: 12px;
-      max-width: 76%;
-      line-height: 1.4;
+      padding: 14px 18px;
+      border-radius: 14px;
+      max-width: 75%;
+      line-height: 1.5;
       word-wrap: break-word;
     }
 
     .user {
       align-self: flex-end;
-      background: rgba(230, 240, 255, 0.9);
-      border-bottom-right-radius: 4px;
+      background: rgba(230, 240, 255, 0.95);
+      border-bottom-right-radius: 6px;
     }
 
     .bot {
       align-self: flex-start;
-      background: rgba(255, 255, 255, 0.85);
-      border-bottom-left-radius: 4px;
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom-left-radius: 6px;
     }
 
+    /* BIG INPUT AREA */
     .controls {
       display: flex;
-      gap: 8px;
-      padding: 12px;
+      gap: 10px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.25);
       border-top: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
     }
 
     input[type="text"] {
       flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #e6eefc;
-      border-radius: 8px;
+      font-size: 16px;
+      padding: 14px 16px;
+      border: 1px solid #d0d8e8;
+      border-radius: 10px;
       outline: none;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(41, 98, 255, 0.3);
     }
 
     button {
       background: var(--accent);
       color: #fff;
       border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
+      font-size: 16px;
+      padding: 14px 20px;
+      border-radius: 10px;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.1s ease;
     }
@@ -138,31 +147,66 @@
     }
 
     footer {
+      margin-top: 20px;
       text-align: center;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.8);
-      margin-top: 18px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.85);
       z-index: 2;
-      position: relative;
     }
 
-    .image-grid {
+    .author {
+      display: inline-block;
+      background: linear-gradient(90deg, #00e5ff, #2979ff, #00e5ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+      animation: cyberGlow 3s infinite alternate ease-in-out;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .author:hover {
+      transform: scale(1.05);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.9);
+    }
+
+    @keyframes cyberGlow {
+      0% { text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+      50% { text-shadow: 0 0 18px rgba(0, 229, 255, 0.9); }
+      100% { text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
+      align-items: center;
+      gap: 4px;
+      margin: 8px 0;
+      align-self: flex-start;
     }
 
-    .image-grid img {
-      width: 180px;
-      border-radius: 8px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background-color: #2962ff;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
     }
 
-    .tag {
-      font-size: 12px;
-      color: #475569;
-      margin-left: auto;
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    @media (max-width: 700px) {
+      .card { width: 95%; min-height: 480px; }
+      input[type="text"] { font-size: 15px; }
+      button { font-size: 15px; padding: 12px 16px; }
     }
   </style>
 </head>
@@ -170,8 +214,26 @@
 <body>
   <div class="overlay"></div>
 
-  <div class="card" role="application" aria-label="PreventiveMedBot">
+  <div class="card">
     <header>
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
         <path d="M12 2v4" stroke="#2962ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8 6v2a4 4 0 0 0 8 0V6" stro
+        <path d="M8 6v2a4 4 0 0 0 8 0V6" stroke="#2962ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="14" r="6" stroke="#8b5cf6" stroke-width="1.6"></circle>
+      </svg>
+      <h1>PreventiveMedBot</h1>
+    </header>
+
+    <div class="chat" id="messages"></div>
+
+    <form id="chatForm" class="controls">
+      <input id="userInput" type="text" placeholder="Describe your concern..." />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <footer>© 2025 <span class="author">@Madhusudhana Kamath</span> | All rights reserved.</footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
