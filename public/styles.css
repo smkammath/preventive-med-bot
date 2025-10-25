@@ -1,0 +1,7 @@
+body { font-family: Arial; background: linear-gradient(#eef,#fff); }
+.app { max-width: 700px; margin: 2em auto; padding: 1em; background: white; border-radius: 8px; box-shadow: 0 0 8px #ccc; }
+.messages { min-height: 400px; overflow-y: auto; margin-bottom: 1em; }
+.msg { padding: 8px; margin: 6px 0; border-radius: 6px; }
+.msg.user { background: #d1eaff; text-align: right; }
+.msg.bot { background: #f3f3ff; text-align: left; }
+#imageBox { margin-top: 20px; text-align: center; }
