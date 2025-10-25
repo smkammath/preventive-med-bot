@@ -146,6 +146,8 @@ vite.config.ts.timestamp-*
 # Don’t upload local environment or dependencies
 node_modules/
 .env
+.DS_Store
+*.log
 
 # DO NOT ignore the public folder
 # (This ensures index.html, styles.css, and js/app.js get deployed)
