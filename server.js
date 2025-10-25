@@ -1,6 +1,5 @@
 // server.js
 import express from "express";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
 import cors from "cors";
 
@@ -16,18 +15,17 @@ app.use(express.static("public"));
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.MODEL || "gpt-4o-mini";
 
-// 🧠 Helper: Format raw text cleanly
+// 🧠 Helper to clean messy JSON-style AI text
 function cleanAIResponse(text) {
-  if (!text) return "I'm sorry, I couldn't generate a response right now.";
-  // Remove JSON code block syntax if present
+  if (!text) return "I’m sorry, I couldn’t generate a response right now.";
   return text
     .replace(/```json|```/g, "")
-    .replace(/["{}]/g, "")
+    .replace(/[{}"]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-// 🩺 POST route to handle chat requests
+// 🩺 Main chat route
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
 
@@ -48,9 +46,9 @@ app.post("/chat", async (req, res) => {
           {
             role: "system",
             content:
-              "You are PreventiveMedBot, an AI specializing in preventive healthcare. " +
-              "Provide concise, empathetic, and helpful advice about health habits, lifestyle improvements, and symptom awareness. " +
-              "Never diagnose — always emphasize consulting healthcare professionals if symptoms persist.",
+              "You are PreventiveMedBot, an empathetic AI specializing in preventive healthcare. " +
+              "You provide concise, human-like advice about healthy habits, symptom awareness, and when to consult a doctor. " +
+              "Avoid medical diagnoses. Always encourage lifestyle improvement and professional consultation if needed.",
           },
           {
             role: "user",
@@ -71,7 +69,7 @@ app.post("/chat", async (req, res) => {
 
     res.json({ reply: cleanedResponse });
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("❌ Error:", error.message);
     res.status(500).json({
       error: "Error generating response from OpenAI",
       details: error.message,
@@ -79,11 +77,11 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// 🩵 Default route
+// 🌐 Default route
 app.get("/", (req, res) => {
   res.sendFile("index.html", { root: "public" });
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ PreventiveMedBot live on port ${PORT}`);
 });
